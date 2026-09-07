@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Otis Camp Claim</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
@@ -106,6 +107,12 @@ button{font:inherit;color:inherit;cursor:pointer}
 .mlist{display:flex;flex-direction:column;gap:8px}
 .mrow{display:flex;align-items:center;gap:10px}
 .mrow .who{flex:1;font-weight:600}
+.vibe{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;background:var(--paper);margin-bottom:10px}
+.vibe .vibeicon{font-size:19px;line-height:1}
+.vibe .vibelabel{flex:1;font-weight:600}
+.vibe .vibescore{font-family:"DM Mono",monospace;font-size:11.5px;color:var(--ink-2)}
+.perks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.perk{border:1px solid var(--rule);background:var(--paper);border-radius:99px;padding:5px 10px;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
 .warn{border:1px solid color-mix(in srgb,var(--warn) 45%,var(--rule));background:color-mix(in srgb,var(--warn) 10%,transparent);border-radius:8px;padding:9px 11px;font-size:13px;color:var(--ink-2)}
 .inrow{display:flex;gap:7px}
 .inrow input{flex:1;min-width:0}
@@ -183,6 +190,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .site{position:absolute;left:0;top:0;transform:translate(-50%,-100%);pointer-events:none;user-select:none;text-align:center;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55))}
 .site .t{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--map-ink);text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 8px rgba(0,0,0,.7);white-space:nowrap;margin-top:2px}
 .site.big .t{font-family:"Alfa Slab One",serif;font-size:12px;letter-spacing:.01em;text-transform:none}
+.site.sm .t{font-size:8.5px;letter-spacing:.08em;opacity:.92}
+.site.sm .spot{width:4px;height:4px}
 .site .spot{width:5px;height:5px;border-radius:50%;background:var(--map-ink);margin:1px auto 0;box-shadow:0 0 0 2px rgba(0,0,0,.45)}
 
 #ghost{position:absolute;left:0;top:0;pointer-events:none;display:none}
@@ -213,6 +222,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .cmsg.mine .cmeta{align-items:flex-end;display:flex;flex-direction:column}
 .cmsg .who{font-size:11px;font-weight:600;color:var(--ink-2);margin-bottom:2px}
 .cmsg .when{font-family:"DM Mono",monospace;font-size:9.5px;color:var(--ink-3);margin-left:6px}
+.camptag{font-weight:400;color:var(--ink-3);font-size:11px}
 .cmsg .bubble{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:8px 12px;font-size:14px;line-height:1.4;word-break:break-word;display:inline-block}
 .cmsg.mine .bubble{background:color-mix(in srgb,var(--ember) 16%,var(--paper));border-color:color-mix(in srgb,var(--ember) 40%,var(--rule))}
 .composer{display:flex;gap:8px;align-items:center;width:100%}
@@ -316,6 +326,7 @@ button{font:inherit;color:inherit;cursor:pointer}
         <button class="hbtn" id="zout" aria-label="Zoom out">&minus;</button>
       </div>
       <button class="hbtn wide" id="fit">Fit map</button>
+      <button class="hbtn wide" id="globalChatBtn">💬 Global Chat</button>
     </div>
     <div class="legend">
       <div class="lr"><span class="k" style="background:var(--field)"></span>Clearing</div>
@@ -354,10 +365,18 @@ var LANDMARKS = [
   { id:"spruce", n:"Spruce Stage", x:505.6, y:232.1, icon:"spruce",    big:true,  w:70, h:50 },
   { id:"range",  n:"The Range",    x:971.1, y:396.8, icon:"range",     big:true,  w:64, h:46 },
   { id:"gate",   n:"Front Gate",   x:293.0, y:422.2, icon:"arch",      big:true,  w:70, h:52 },
-  { id:"food",   n:"Food",         x:668.6, y:273.7, icon:"food",      big:false, w:54, h:37 }
+  { id:"food",   n:"Food",         x:668.6, y:273.7, icon:"food",      sm:true, w:44, h:30 },
+
+  /* amenities — small on purpose, so they don't crowd the map */
+  { id:"wc1",    n:"Bathrooms",    x:367.4, y:447.9, icon:"bathroom",  sm:true, w:26, h:32 },
+  { id:"wc2",    n:"Bathrooms",    x:810.3, y:338.3, icon:"bathroom",  sm:true, w:26, h:32 },
+  { id:"water",  n:"Water",        x:574.3, y:376.8, icon:"water",     sm:true, w:28, h:32 },
+  { id:"art",    n:"Artsy Things", x:916.8, y:414.5, icon:"art",       sm:true, w:32, h:30 },
+  { id:"drugs",  n:"Drugs",        x:959.6, y:51.6,  icon:"tent",      sm:true, w:34, h:28 }
 ];
 
 var CAMP_COLORS = ["#c9502a","#6b5a90","#3f8f6d","#c98a2b","#3d6f9e","#a8477a","#5c8a2e","#8a5a3c"];
+var GLOBAL_CAMP = { id:"global", name:"Global Chat", color:"var(--dusk)" };
 var EMOJI = ["⛺","\u{1F332}","\u{1F525}","\u{1F3B8}","\u{1F344}","\u{1F98C}","\u{1F43B}","\u{1F319}","\u{1F41F}","\u{1F42D}","☀️","\u{1F308}","\u{1F41D}","\u{1F98A}","\u{1F349}","⚡","\u{1F340}","\u{1F3AA}"];
 /* ---------- helpers ---------- */
 function inPoly(x,y,pts){
@@ -487,6 +506,38 @@ function stageIcon(kind,w,h){
     var t=el("text",{x:32,y:26,"text-anchor":"middle","font-size":"8.5","font-family":"'Alfa Slab One',serif",fill:"#2d1c0f"});
     t.textContent="OTIS"; g.appendChild(t);
     R(6,40,52,3,"#241a12",1);
+  } else if(kind==="bathroom"){
+    /* porta-potty: tall box, vent slot, door seam */
+    R(14,10,36,32,"#7d9c8a",2);
+    R(14,8,36,5,"#617f6f",2);
+    P("M14 10 L32 4 L50 10 Z","#9ab8a6");
+    R(20,16,10,4,"#3a4f44",1);            // vent
+    R(34,16,12,20,"#5e7c6c",1);           // door
+    g.appendChild(el("circle",{cx:37,cy:27,r:1.6,fill:"#cbd8cf"}));
+    R(12,42,40,3,"#241a12",1);
+  } else if(kind==="water"){
+    /* jug on a stand with a spigot */
+    R(18,10,28,22,"#b6d0d7",3);
+    R(18,10,28,7,"#d8e8ec",3);
+    R(28,6,8,5,"#7a9aa3",2);              // cap
+    R(30,32,4,6,"#6b7a80",1);             // spigot
+    g.appendChild(el("path",{d:"M32 38 q0 4 -2 5 q2 2 4 0 q-2 -1 -2 -5 Z",fill:"#6fb3d0"}));
+    R(16,32,32,3,"#5f7076",1);
+    R(19,35,4,8,"#5f7076",1); R(41,35,4,8,"#5f7076",1);
+  } else if(kind==="art"){
+    /* palette and brush */
+    g.appendChild(el("path",{d:"M16 26 a16 13 0 1 1 24 11 q-5 2 -5 -2 q0 -4 -5 -3 q-7 1 -9 -1 q-5 -2 -5 -5 Z",fill:"#d8c9a8"}));
+    [[22,20,"#c9502a"],[30,17,"#3f8f6d"],[37,21,"#3d6f9e"],[24,29,"#c98a2b"]].forEach(function(c){
+      g.appendChild(el("circle",{cx:c[0],cy:c[1],r:2.6,fill:c[2]}));
+    });
+    P("M40 8 L48 14 L34 30 L30 27 Z","#8a6644");
+    P("M30 27 L34 30 L29 33 Z","#c9502a");
+  } else if(kind==="tent"){
+    /* small canvas tent */
+    P("M32 8 L52 36 L12 36 Z","#d8cbb0");
+    P("M32 8 L42 36 L22 36 Z","#bfae8d");
+    P("M32 16 L38 36 L26 36 Z","#5a4a36");
+    R(10,36,44,3,"#241a12",1);
   } else { /* food: a ring of vendor canopies */
     [[16,20],[32,16],[48,20],[24,30],[40,30]].forEach(function(p,i){
       P("M"+(p[0]-7)+" "+(p[1]+5)+" L"+p[0]+" "+(p[1]-3)+" L"+(p[0]+7)+" "+(p[1]+5)+" Z", i%2?"#d8cbb0":"#c86a76");
@@ -578,6 +629,7 @@ function ctr(){ var b=stage.getBoundingClientRect(); return [b.left+stage.client
 document.getElementById("zin").onclick=function(){ var c=ctr(); setZoomAbout(c[0],c[1],T.k*1.45); };
 document.getElementById("zout").onclick=function(){ var c=ctr(); setZoomAbout(c[0],c[1],T.k/1.45); };
 document.getElementById("fit").onclick=fit;
+document.getElementById("globalChatBtn").onclick=function(){ openChatSheet(GLOBAL_CAMP); };
 var menuBtn=document.getElementById("menuBtn"), hud=document.getElementById("hud");
 menuBtn.onclick=function(e){
   e.stopPropagation();
@@ -694,7 +746,7 @@ LANDMARKS.forEach(function(s){
   w.appendChild(stageIcon(s.icon,s.w,s.h));
   var sp=document.createElement("div"); sp.className="spot"; w.appendChild(sp);
   var t=document.createElement("div"); t.className="t"; t.textContent=s.n; w.appendChild(t);
-  siteEls.push({e:anchorAt(s.x,s.y,w,"site"+(s.big?" big":"")),big:s.big});
+  siteEls.push({e:anchorAt(s.x,s.y,w,"site"+(s.big?" big":"")+(s.sm?" sm":"")),big:s.big});
 });
 function updateLabelVis(){
   siteEls.forEach(function(s){ s.e.style.opacity=(s.big||T.k>0.6)?"1":"0"; });
@@ -898,6 +950,40 @@ function relTime(ts){
   return Math.round(h/24)+"d ago";
 }
 
+/* ---------- camp perks & vibe score ----------
+   Proximity to water / drugs / artsy things, plus a flat regional
+   perk for the two areas on each side of the main path. Purely a
+   for-fun scoring layer — geometry only, nothing here touches DATA. */
+function landmarkById(id){ for(var i=0;i<LANDMARKS.length;i++) if(LANDMARKS[i].id===id) return LANDMARKS[i]; return null; }
+function mapDist(x1,y1,x2,y2){ return Math.hypot(x1-x2,y1-y2); }
+function proximityPerk(c,lmId,icon,label){
+  var lm=landmarkById(lmId); if(!lm) return null;
+  var d=mapDist(c.x,c.y,lm.x,lm.y);
+  if(d<100) return {icon:icon,label:label+": right there",pts:3};
+  if(d<220) return {icon:icon,label:label+": short walk",pts:2};
+  if(d<380) return {icon:icon,label:label+": nearby",pts:1};
+  return null;
+}
+var RIGHT_SIDE_AREAS={a0:1,a1:1}, LEFT_SIDE_AREAS={a2:1,a3:1};
+function campPerks(c){
+  var perks=[];
+  [proximityPerk(c,"water","\u{1F4A7}","Water"),
+   proximityPerk(c,"drugs","\u{1F343}","Drugs"),
+   proximityPerk(c,"art","\u{1F3A8}","Artsy Things")
+  ].forEach(function(p){ if(p) perks.push(p); });
+  if(RIGHT_SIDE_AREAS[c.area]){
+    perks.push({icon:"\u{1F319}",label:"Late night vibes",pts:1});
+    perks.push({icon:"\u{1F476}",label:"Fewer kids around",pts:1});
+  } else if(LEFT_SIDE_AREAS[c.area]){
+    perks.push({icon:"\u{1F3B6}",label:"Short walk to the music",pts:1});
+    perks.push({icon:"\u{1F697}",label:"Short walk to your car",pts:1});
+  }
+  var total=perks.reduce(function(t,p){return t+p.pts;},0);
+  var tier = total>=9?"Legendary":total>=6?"Prime":total>=3?"Solid":"Rustic";
+  var tierIcon = total>=9?"\u{1F451}":total>=6?"\u{1F525}":total>=3?"\u{1F44D}":"\u{1F3D5}️";
+  return { perks:perks, total:total, tier:tier, tierIcon:tierIcon };
+}
+
 /* ---------- avatars ---------- */
 function avatarHTML(p,cls,col){
   col = col || "var(--dusk)";
@@ -1000,10 +1086,11 @@ function renderRail(){
   }
   CAMPS.slice().sort(function(a,b){ return membersOf(b.id).length-membersOf(a.id).length || (a.ts||0)-(b.ts||0); })
   .forEach(function(c){
-    var mem=membersOf(c.id), mine=inMyCamp(c), col=campColor(c);
+    var mem=membersOf(c.id), mine=inMyCamp(c), col=campColor(c), vp=campPerks(c);
     var row=document.createElement("div"); row.className="zrow"+(mine?" mine":"");
     row.innerHTML='<div class="top"><span class="swatch" style="background:'+esc(col)+'"></span>'
       +'<span class="zn">'+esc(c.name)+'</span>'
+      +'<span class="mono" title="'+esc(vp.tier)+' campsite — '+vp.total+' pts" style="font-size:13px">'+vp.tierIcon+'</span>'
       +'<span class="cnt">'+mem.length+'</span></div>'
       +(c.note?'<div class="blurb">'+esc(c.note)+'</div>':'')
       +(mem.length?'<div class="stackav">'+mem.slice(0,8).map(function(p){return avatarHTML(p,"",col);}).join("")
@@ -1282,11 +1369,15 @@ function openNewCamp(x,y,area){
 
 /* --- an existing camp --- */
 function openCampSheet(c){
-  var mem=membersOf(c.id), mine=inMyCamp(c), col=campColor(c);
+  var mem=membersOf(c.id), mine=inMyCamp(c), col=campColor(c), vp=campPerks(c);
   sheet.innerHTML='<div class="hd"><div class="eyebrow"><span class="swatch" style="background:'+esc(col)+'"></span> '
       +mem.length+(mem.length===1?" camping here":" camping here")+'</div><h2>'+esc(c.name)+'</h2>'
     +(c.note?'<div class="hint">'+esc(c.note)+'</div>':'')+'</div>'
-    +'<div class="bd"><div class="mlist">'
+    +'<div class="bd">'
+    +'<div class="vibe"><span class="vibeicon">'+vp.tierIcon+'</span><span class="vibelabel">'+esc(vp.tier)+' campsite</span><span class="vibescore">'+vp.total+' pts</span></div>'
+    +(vp.perks.length?'<div class="perks">'+vp.perks.map(function(p){return '<span class="perk">'+p.icon+' '+esc(p.label)+'</span>';}).join('')+'</div>'
+      :'<div class="hint" style="margin-bottom:12px">No nearby perks — just the woods.</div>')
+    +'<div class="mlist">'
     +(mem.length?mem.map(function(p){
         return '<div class="mrow">'+avatarHTML(p,"",col)+'<span class="who">'+esc(p.name)
           +(p.id===MEKEY?' <span class="tag">you</span>':'')+'</span></div>'; }).join("")
@@ -1318,39 +1409,48 @@ function openCampSheet(c){
 }
 
 /* --- camp chat: members only --- */
+function chatTarget(id){ return id===GLOBAL_CAMP.id ? GLOBAL_CAMP : campById(id); }
 function renderChat(){
   if(!openChatCampId) return;
   var list=sheet.querySelector("#chatList"); if(!list) return;
-  var c=campById(openChatCampId); if(!c) return;
+  var c=chatTarget(openChatCampId); if(!c) return;
+  var isGlobal=(c.id===GLOBAL_CAMP.id);
   var col=campColor(c), msgs=messagesOf(c.id);
   var wasNearBottom = list.scrollHeight-list.scrollTop-list.clientHeight<60;
   list.innerHTML = msgs.length ? msgs.map(function(m){
     var p=PEOPLE.filter(function(x){return x.id===m.personId;})[0];
     var mine=m.personId===MEKEY;
-    return '<div class="cmsg'+(mine?" mine":"")+'">'+avatarHTML(p,"",col)
-      +'<div class="cmeta"><div><span class="who">'+esc(p?p.name:"Someone")+'</span><span class="when">'+relTime(m.ts)+'</span></div>'
+    var tag="";
+    if(isGlobal){
+      var pc=p?campById(p.campId):null;
+      tag=pc?' <span class="camptag">['+esc(pc.name)+']</span>':'';
+    }
+    return '<div class="cmsg'+(mine?" mine":"")+'">'+avatarHTML(p,"",isGlobal?campColor(p?campById(p.campId):null):col)
+      +'<div class="cmeta"><div><span class="who">'+esc(p?p.name:"Someone")+tag+'</span><span class="when">'+relTime(m.ts)+'</span></div>'
       +'<div class="bubble">'+esc(m.text)+'</div></div></div>';
   }).join("") : '<div class="empty">No messages yet — say hi.</div>';
   if(wasNearBottom) list.scrollTop=list.scrollHeight;
 }
 function openChatSheet(c){
-  if(!inMyCamp(c)){ openJoinSheet(c); return; }
+  var isGlobal=(c.id===GLOBAL_CAMP.id);
+  if(!isGlobal && !inMyCamp(c)){ openJoinSheet(c); return; }
+  if(isGlobal && !me()){ toast("✍️","Add your name first."); openMeSheet(); return; }
   openChatCampId=c.id;
   var col=campColor(c);
   sheet.className="sheet chat";
   sheet.innerHTML='<div class="hd" style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">'
-      +'<div><div class="eyebrow"><span class="swatch" style="background:'+esc(col)+'"></span> Camp chat</div><h2>'+esc(c.name)+'</h2></div>'
+      +'<div><div class="eyebrow"><span class="swatch" style="background:'+esc(col)+'"></span> '+(isGlobal?"Everyone &middot; trash talk welcome":"Camp chat")+'</div><h2>'+esc(c.name)+'</h2></div>'
       +'<button type="button" class="btn ghost" id="chatClose">Close</button></div>'
     +'<div class="bd"><div class="chatlist" id="chatList"></div></div>'
     +'<div class="ft"><form class="composer" id="chatForm">'+avatarHTML(me(),"",col)
-      +'<input type="text" id="chatMsg" maxlength="300" autocomplete="off" placeholder="Message '+esc(c.name)+'&hellip;">'
+      +'<input type="text" id="chatMsg" maxlength="300" autocomplete="off" placeholder="'+(isGlobal?"Talk trash, recruit for your camp&hellip;":"Message "+esc(c.name)+"&hellip;")+'">'
       +'<button type="submit" class="btn primary" id="chatSend">Send</button></form></div>';
   scrim.classList.add("on");
   renderChat();
   sheet.querySelector("#chatClose").onclick=closeSheet;
   sheet.querySelector("#chatForm").onsubmit=function(e){
     e.preventDefault();
-    if(SB && !chatReady){ toast("⚠️","Camp chat isn't set up for this map yet."); return; }
+    if(SB && !chatReady){ toast("⚠️", isGlobal?"Global chat isn't set up for this map yet.":"Camp chat isn't set up for this map yet."); return; }
     var inp=sheet.querySelector("#chatMsg"), txt=inp.value.trim();
     if(!txt) return;
     putMessage({ id:"m"+Math.random().toString(36).slice(2,10)+Date.now().toString(36),
